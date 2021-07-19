@@ -3,7 +3,7 @@ from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods
 
-from .forms import CommentsForm, PostForm
+from .forms import CommentForm, PostForm
 from .models import Group, Post, User
 
 
@@ -46,7 +46,7 @@ def index(request):
 @require_http_methods(["GET", "POST"])
 @login_required
 def new_post(request):
-    form = PostForm(request.POST or None)
+    form = PostForm(request.POST or None, files=request.FILES or None)
 
     if not form.is_valid():
         return render(
@@ -84,19 +84,20 @@ def profile(request, username):
     )
 
 
-@require_http_methods(["GET"])
+
 def post_view(request, username, post_id):
     post = get_object_or_404(Post, pk=post_id)
     comments = post.comments.all()
     author = post.author
     post_count = author.posts.count()
-    form = CommentsForm(request.POST or None)
+    form = CommentForm(request.POST or None)
 
     context = {
         "post": post,
         "comments": comments,
         "author": author,
         "post_count": post_count,
+        'post_id': post_id,
         "form": form,
     }
     return render(request, "posts/post_view.html", context)
@@ -135,7 +136,7 @@ def post_edit(request, username, post_id):
 @login_required
 def add_comment(request, username, post_id):
     post = get_object_or_404(Post, id=post_id)
-    form = CommentsForm(request.POST or None)
+    form = CommentForm(request.POST or None)
 
     if request.method == "GET" or not form.is_valid():
         return redirect("post", username, post_id)
