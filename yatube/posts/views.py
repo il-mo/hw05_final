@@ -2,9 +2,10 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods
+from django.views.decorators.cache import cache_page
 
 from .forms import CommentForm, PostForm
-from .models import Group, Post, User
+from .models import Follow, Group, Post, User
 
 
 @require_http_methods(["GET"])
@@ -27,6 +28,7 @@ def group_posts(request, slug):
 
 
 @require_http_methods(["GET"])
+@cache_page(20)
 def index(request):
     post_list = Post.objects.all()
 
@@ -73,6 +75,13 @@ def profile(request, username):
     page = paginator.get_page(page_number)
     count_post = posts.count()
 
+    if request.user.is_authenticated:
+        following = Follow.objects.filter(
+            user=request.user, author=author
+        ).exists()
+    else:
+        following = False
+
     return render(
         request,
         "profile.html",
@@ -80,9 +89,9 @@ def profile(request, username):
             "page": page,
             "author": author,
             "count_post": count_post,
+            "following": following,
         },
     )
-
 
 
 def post_view(request, username, post_id):
@@ -97,7 +106,7 @@ def post_view(request, username, post_id):
         "comments": comments,
         "author": author,
         "post_count": post_count,
-        'post_id': post_id,
+        "post_id": post_id,
         "form": form,
     }
     return render(request, "posts/post_view.html", context)
@@ -155,3 +164,50 @@ def page_not_found(request, exception):
 
 def server_error(request):
     return render(request, "misc/500.html", status=500)
+
+
+@require_http_methods(["GET"])
+@login_required
+def follow_index(request):
+    username = get_object_or_404(Follow, author__following__user=request.user)
+    post_list = Post.objects.filter(author__following__user=request.user)
+
+    paginator = Paginator(post_list, 10)
+    page_number = request.GET.get("page")
+    page = paginator.get_page(page_number)
+
+    return render(
+        request,
+        "posts/follow.html",
+        {"page": page, "username": username},
+    )
+
+
+@require_http_methods(["GET"])
+@login_required
+def profile_follow(request, username):
+    author = get_object_or_404(User, username=username)
+    user_subscribed = Follow.objects.filter(
+        user=request.user, author=author
+    ).exists()
+
+    if request.user != author:
+        if not user_subscribed:
+            Follow.objects.create(user=request.user, author=author)
+        return redirect("profile", username=username)
+
+    return redirect("profile", username=username)
+
+
+@require_http_methods(["GET"])
+@login_required
+def profile_unfollow(request, username):
+    author = get_object_or_404(User, username=username)
+    user_subscribed = Follow.objects.filter(
+        user=request.user, author=author
+    ).exists()
+
+    if user_subscribed:
+        Follow.objects.get(user=request.user, author=author).delete()
+
+    return redirect("profile", username=username)

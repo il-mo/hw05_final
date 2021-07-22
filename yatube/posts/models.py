@@ -83,3 +83,18 @@ class Comment(models.Model):
 
     class Meta:
         ordering = ("-created",)
+
+
+class Follow(models.Model):
+    author = models.ForeignKey(
+        User,
+        verbose_name="Автор",
+        on_delete=models.CASCADE,
+        related_name="following",
+    )
+    user = models.ForeignKey(
+        User,
+        verbose_name="Подписчик",
+        on_delete=models.CASCADE,
+        related_name="follower",
+    )
