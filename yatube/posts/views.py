@@ -169,7 +169,7 @@ def server_error(request):
 @require_http_methods(["GET"])
 @login_required
 def follow_index(request):
-    username = get_object_or_404(Follow, author__following__user=request.user)
+
     post_list = Post.objects.filter(author__following__user=request.user)
 
     paginator = Paginator(post_list, 10)
@@ -179,7 +179,9 @@ def follow_index(request):
     return render(
         request,
         "posts/follow.html",
-        {"page": page, "username": username},
+        {
+            "page": page,
+        },
     )
 
 
@@ -191,10 +193,8 @@ def profile_follow(request, username):
         user=request.user, author=author
     ).exists()
 
-    if request.user != author:
-        if not user_subscribed:
-            Follow.objects.create(user=request.user, author=author)
-        return redirect("profile", username=username)
+    if request.user != author and user_subscribed is False:
+        Follow.objects.create(user=request.user, author=author)
 
     return redirect("profile", username=username)
 
