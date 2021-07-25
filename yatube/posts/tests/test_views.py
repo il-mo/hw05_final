@@ -132,7 +132,6 @@ class PostPagesTests(TestCase):
 
         for group_id in (self.group.id, None):
             with self.subTest(group_id=group_id):
-                posts_count = Post.objects.count()
                 if group_id:
                     form_data['group_id'] = group_id
 
