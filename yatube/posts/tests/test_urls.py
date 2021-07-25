@@ -96,7 +96,7 @@ class PostUrlsTests(TestCase):
         response = self.authorized_client.get('/new/')
         self.assertTemplateUsed(response, 'posts/new_post.html')
 
-    def test_edit_page_uses_correct_template(self):
-        """Тестирование вызываемого шаблона главной страницы"""
-        response = self.guest_client.get('/')
-        self.assertTemplateUsed(response, 'index.html')
+    # def test_edit_page_uses_correct_template(self):
+    #     """Тестирование вызываемого шаблона главной страницы"""
+    #     response = self.guest_client.get('/')
+    #     self.assertTemplateUsed(response, 'index.html')
