@@ -7,11 +7,11 @@ User = get_user_model()
 
 
 class PostModelTests(TestCase):
-    AUTH_USER_NAME = "TestUser"
-    PAGE_TEXT = "Тестовый текст"
-    PAGE_GROUP = "Тестовая группа"
-    GROUP_SLUG = "test-group"
-    GROUP_DESCRIPTION = "Описание группы"
+    AUTH_USER_NAME = 'TestUser'
+    PAGE_TEXT = 'Тестовый текст'
+    PAGE_GROUP = 'Тестовая группа'
+    GROUP_SLUG = 'test-group'
+    GROUP_DESCRIPTION = 'Описание группы'
 
     @classmethod
     def setUpClass(cls):
@@ -32,7 +32,7 @@ class PostModelTests(TestCase):
         self.authorized_client.force_login(self.user)
 
     def test_post_name(self):
-        """Тестирование отображение __str__ в модели Post"""
+        """'Тестирование отображение __str__ в модели Post"""
         post = PostModelTests.post
         expected_post_contain = post.text[:15]
         self.assertEqual(expected_post_contain, str(post))

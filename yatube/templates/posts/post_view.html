@@ -1,11 +1,11 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% block header %}Пост №{{ post.id }}{% endblock %}
 {% block content %}
 {% csrf_token %}
 
 
-{% include "posts/post_item.html" with post=post %}
-{% include "posts/comments.html" %}
+{% include 'posts/post_item.html' with post=post %}
+{% include 'posts/comments.html' %}
 
 
 

@@ -9,20 +9,20 @@ class StaticURLTests(TestCase):
         self.guest_client = Client()
 
     def test_about_author(self):
-        """Тестирование доступности страницы об авторе"""
-        response = self.guest_client.get("/about/author/")
+        '''Тестирование доступности страницы об авторе'''
+        response = self.guest_client.get('/about/author/')
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_about_tech(self):
-        """Тестирование доступности страницы о технологиях"""
-        response = self.guest_client.get("/about/tech/")
+        '''Тестирование доступности страницы о технологиях'''
+        response = self.guest_client.get('/about/tech/')
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_pages_use_correct_template(self):
-        """Тестирование вызываемых шаблонов при обращении к view-классам"""
+        '''Тестирование вызываемых шаблонов при обращении к view-классам'''
         templates_pages_names = {
-            "about/author.html": reverse("about:author"),
-            "about/tech.html": reverse("about:tech"),
+            'about/author.html': reverse('about:author'),
+            'about/tech.html': reverse('about:tech'),
         }
 
         for template, reverse_name in templates_pages_names.items():

@@ -1,45 +1,45 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% block header %}{% endblock %}
 {% block content %}
 {% load user_filters %}
 
 
 {% if post_changed %}
-<div class="card my-4">
-    <form method="post" enctype="multipart/form-data"
-          action="{% url 'post_edit' post_changed.author.username post_changed.pk %}">
-        <h5 class="card-header">Отредактировать сообщение:</h5>
-        <div class="card-body">
-            <div class="form-group">
+<div class='card my-4'>
+    <form method='post' enctype='multipart/form-data'
+          action='{% url 'post_edit' post_changed.author.username post_changed.pk %}'>
+        <h5 class='card-header'>Отредактировать сообщение:</h5>
+        <div class='card-body'>
+            <div class='form-group'>
                 {% csrf_token %}
                 {{ form.text.errors }}
                 {% for field in form %}
-                {{ field|addclass:"form-control" }}
+                {{ field|addclass:'form-control' }}
                 {% if field.help_text %}
                 {% endif %}
                 {% endfor %}
             </div>
-            <button type="submit" class="btn btn-primary">Отправить</button>
+            <button type='submit' class='btn btn-primary'>Отправить</button>
         </div>
     </form>
 </div>
 
 {% else %}
 
-<div class="card my-4">
-    <form method="post" enctype="multipart/form-data" enctype="multipart/form-data" action="{% url 'new_post' %}">
-        <h5 class="card-header">Создать пост:</h5>
+<div class='card my-4'>
+    <form method='post' enctype='multipart/form-data' enctype='multipart/form-data' action='{% url 'new_post' %}'>
+        <h5 class='card-header'>Создать пост:</h5>
 
-        <div class="form-group">
+        <div class='form-group'>
             {% csrf_token %}
             {{ form.text.errors }}
             {% for field in form %}
-            {{ field|addclass:"form-control" }}
+            {{ field|addclass:'form-control' }}
             {% if field.help_text %}
             {% endif %}
             {% endfor %}
 
-            <button type="submit" class="btn btn-primary">Отправить</button>
+            <button type='submit' class='btn btn-primary'>Отправить</button>
         </div>
     </form>
 </div>

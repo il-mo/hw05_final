@@ -8,55 +8,55 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("posts", "0001_initial"),
+        ('posts', '0001_initial'),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name="group",
-            name="description",
-            field=models.TextField(verbose_name="Описание"),
+            model_name='group',
+            name='description',
+            field=models.TextField(verbose_name='Описание'),
         ),
         migrations.AlterField(
-            model_name="group",
-            name="slug",
+            model_name='group',
+            name='slug',
             field=models.SlugField(
                 blank=True,
-                help_text="Используйте только латиницу, цифры, дефисы и знаки подчёркивания",
+                help_text='Используйте только латиницу, цифры, дефисы и знаки подчёркивания',
                 max_length=100,
                 unique=True,
-                verbose_name="Адрес для страницы с группой",
+                verbose_name='Адрес для страницы с группой',
             ),
         ),
         migrations.AlterField(
-            model_name="group",
-            name="title",
+            model_name='group',
+            name='title',
             field=models.CharField(
-                help_text="Дайте  название вашей группе",
+                help_text='Дайте  название вашей группе',
                 max_length=200,
-                verbose_name="Название группы",
+                verbose_name='Название группы',
             ),
         ),
         migrations.AlterField(
-            model_name="post",
-            name="author",
+            model_name='post',
+            name='author',
             field=models.ForeignKey(
                 on_delete=django.db.models.deletion.CASCADE,
-                related_name="posts",
+                related_name='posts',
                 to=settings.AUTH_USER_MODEL,
-                verbose_name="Автор",
+                verbose_name='Автор',
             ),
         ),
         migrations.AlterField(
-            model_name="post",
-            name="pub_date",
+            model_name='post',
+            name='pub_date',
             field=models.DateTimeField(
-                auto_now_add=True, verbose_name="Дата публикации"
+                auto_now_add=True, verbose_name='Дата публикации'
             ),
         ),
         migrations.AlterField(
-            model_name="post",
-            name="text",
-            field=models.TextField(verbose_name="Содержание"),
+            model_name='post',
+            name='text',
+            field=models.TextField(verbose_name='Содержание'),
         ),
     ]

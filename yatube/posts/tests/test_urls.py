@@ -9,11 +9,11 @@ User = get_user_model()
 
 
 class PostUrlsTests(TestCase):
-    AUTH_USER_NAME = "TestUser"
-    PAGE_TEXT = "Тестовый текст"
-    PAGE_GROUP = "Тестовая группа"
-    GROUP_SLUG = "test-group"
-    GROUP_DESCRIPTION = "Описание группы"
+    AUTH_USER_NAME = 'TestUser'
+    PAGE_TEXT = 'Тестовый текст'
+    PAGE_GROUP = 'Тестовая группа'
+    GROUP_SLUG = 'test-group'
+    GROUP_DESCRIPTION = 'Описание группы'
 
     @classmethod
     def setUpClass(cls):
@@ -34,7 +34,7 @@ class PostUrlsTests(TestCase):
         self.authorized_client.force_login(self.user)
 
         self.user_not_author = User.objects.create_user(
-            username="TestUserNotAuthor"
+            username='TestUserNotAuthor'
         )
         self.authorized_client_not_author = Client()
         self.authorized_client_not_author.force_login(self.user_not_author)
@@ -42,50 +42,49 @@ class PostUrlsTests(TestCase):
     def test_pages_url_exists_at_desired_location(self):
         """Тестирование доступности страниц"""
         pages_status = {
-            HTTPStatus.OK: self.guest_client.get("/").status_code,
+            HTTPStatus.OK: self.guest_client.get('/').status_code,
             HTTPStatus.OK: self.guest_client.get(
-                "/group/test-group/"
+                '/group/test-group/'
             ).status_code,
-            HTTPStatus.OK: self.authorized_client.get("/new/").status_code,
-            HTTPStatus.OK: self.guest_client.get("/TestUser/").status_code,
-            HTTPStatus.OK: self.guest_client.get("/TestUser/1/").status_code,
+            HTTPStatus.OK: self.authorized_client.get('/new/').status_code,
+            HTTPStatus.OK: self.guest_client.get('/TestUser/').status_code,
+            HTTPStatus.OK: self.guest_client.get('/TestUser/1/').status_code,
             HTTPStatus.FOUND: self.guest_client.get(
-                "/TestUser/1/edit/"
+                '/TestUser/1/edit/'
             ).status_code,
             HTTPStatus.OK: self.authorized_client.get(
-                "/TestUser/1/edit/"
+                '/TestUser/1/edit/'
             ).status_code,
             HTTPStatus.FOUND: self.authorized_client_not_author.get(
-                "/TestUser/1/edit/"
+                '/TestUser/1/edit/'
             ).status_code,
-            HTTPStatus.NOT_FOUND: self.guest_client.get(
-                "/14/88/"
-            ).status_code,
+            HTTPStatus.NOT_FOUND: self.guest_client.get('/14/88/').status_code,
         }
         for expected, value in pages_status.items():
             with self.subTest(value=value, expected=expected):
                 self.assertEqual(
-                    value, expected, "Статус страницы не правильный"
+                    value, expected, 'Статус страницы не правильный'
                 )
 
-    def test_new_post_url_redirect_anonymous_on_login(cls):
+    def test_new_post_url_redirect_anonymous_on_login(self):
         """Тестирование редиректа со страницы создания поста
         при отсутвии прав доступа"""
-        response = cls.guest_client.get("/new/", follow=True)
-        cls.assertRedirects(response, "/auth/login/?next=/new/")
+        response = self.guest_client.get('/new/', follow=True)
+        self.assertRedirects(response, '/auth/login/?next=/new/')
 
-    def test_post_edit_url_redirect_anonymous_on_login(cls):
+    def test_post_edit_url_redirect_anonymous_on_login(self):
         """Тестирование редиректа со страницы редактирования поста
         при отсутвии прав доступа"""
-        response = cls.guest_client.get("/TestUser/1/edit/", follow=True)
-        cls.assertRedirects(response, "/auth/login/?next=/TestUser/1/edit/")
+        response = self.guest_client.get('/TestUser/1/edit/', follow=True)
+        self.assertRedirects(response, '/auth/login/?next=/TestUser/1/edit/')
 
     def test_urls_uses_correct_template(self):
         """Тестирование вызываемых шаблонов"""
         templates_url_names = {
-            "index.html": "/",
-            "posts/new_post.html": "/new/",
-            "posts/group.html": "/group/test-group/",
+            'posts/new_post.html': '/TestUser/1/edit/',  # noqa
+            'posts/new_post.html': '/new/',  # noqa
+            'posts/group.html': '/group/test-group/',
+            'posts/follow.html': '/follow/',
         }
 
         for template, adress in templates_url_names.items():
@@ -94,6 +93,6 @@ class PostUrlsTests(TestCase):
                 self.assertTemplateUsed(response, template)
 
     def test_edit_page_uses_correct_template(self):
-        """Попытался так решить проблему)"""
-        response = self.authorized_client.get("/TestUser/1/edit/")
-        self.assertTemplateUsed(response, "posts/new_post.html")
+        """Тестирование вызываемого шаблона главной страницы"""
+        response = self.guest_client.get('/')
+        self.assertTemplateUsed(response, 'index.html')
