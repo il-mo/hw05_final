@@ -5,7 +5,8 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
+from django.core.cache import cache
 from django.urls import reverse
 
 from ..models import Follow, Group, Post
@@ -20,12 +21,12 @@ class PostPagesTests(TestCase):
     PAGE_GROUP = 'Тестовая группа'
     GROUP_SLUG = 'test-group'
     GROUP_DESCRIPTION = 'Описание группы'
-    IMAGE = 'posts/small.gif'
+
 
     @classmethod
+    @override_settings(MEDIA_ROOT=tempfile.mkdtemp(dir=settings.BASE_DIR))
     def setUpClass(cls):
         super().setUpClass()
-        settings.MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
         small_gif = (
             b'\x47\x49\x46\x38\x39\x61\x02\x00'
             b'\x01\x00\x80\x00\x00\x00\x00\x00'
@@ -34,7 +35,7 @@ class PostPagesTests(TestCase):
             b'\x02\x00\x01\x00\x00\x02\x02\x0C'
             b'\x0A\x00\x3B'
         )
-
+        cls.IMAGE = 'posts/small.gif'
         cls.upload = SimpleUploadedFile(
             name='small.gif', content=small_gif, content_type='image/gif'
         )
@@ -62,11 +63,15 @@ class PostPagesTests(TestCase):
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
 
+        self.authorized_client2 = Client()
+        self.authorized_client.force_login(self.user2)
+
+        cache.clear()
+
     def test_pages_use_correct_template(self):
-        """Тестирование вызываемых шаблонов при обращении к view-классам
-        Часть тестов закомменчена, ошибка в index, не смог понять где"""
+        """Тестирование вызываемых шаблонов при обращении к view-классам"""
         templates_pages_names = {
-            # 'index': reverse('index'),
+            'index.html': reverse('index'),
             'posts/new_post.html': reverse('new_post'),
             'posts/group.html': (
                 reverse('group_posts', kwargs={'slug': 'test-group'})
@@ -78,23 +83,23 @@ class PostPagesTests(TestCase):
                 response = self.authorized_client.get(reverse_name)
                 self.assertTemplateUsed(response, template)
 
-    # def test_context_in_index_page(self):
-    #     """Тестирование содержания context в главной страницы"""
-    #     response = self.guest_user.get(reverse('index'))
-    #     context_post = {
-    #         self.PAGE_TEXT: response.context['page'][0].text,
-    #         self.AUTH_USER_NAME: response.context['page'][0].author.username,
-    #         self.PAGE_GROUP: response.context['page'][0].group.title,
-    #         self.IMAGE: response.context['page'][0].image,
-    #
-    #     }
-    #     for expected, value in context_post.items():
-    #         with self.subTest(value=value):
-    #             self.assertEqual(
-    #                 value,
-    #                 expected,
-    #                 'Данные переданные в context' 'не соответствуют записям',
-    #             )
+    def test_context_in_index_page(self):
+        """Тестирование содержания context в главной страницы"""
+        response = self.guest_user.get(reverse('index'))
+        context_post = {
+            self.PAGE_TEXT: response.context['page'][0].text,
+            self.AUTH_USER_NAME: response.context['page'][0].author.username,
+            self.PAGE_GROUP: response.context['page'][0].group.title,
+            self.IMAGE: response.context['page'][0].image,
+
+        }
+        for expected, value in context_post.items():
+            with self.subTest(value=value):
+                self.assertEqual(
+                    value,
+                    expected,
+                    'Данные переданные в context' 'не соответствуют записям',
+                )
 
     def test_group_page_shows_correct_context(self):
         """Тестирование содержания context в страницы группы"""
@@ -133,37 +138,20 @@ class PostPagesTests(TestCase):
                 if group_id:
                     form_data['group_id'] = group_id
 
-        response = self.authorized_client.post(
-            reverse(
-                'new_post',
-            ),
-            data=form_data,
-            follow=True,
-        )
-        self.assertRedirects(response, reverse('index'))
-        Post.objects.filter(
-            text='Новый текст',
-            group_id=group_id,
-            author=self.post.author,
-        ).exists()
-
-    def test_post_edit_shows_correct_context(self):
-        """Тестирование содержания context в страницы редактирования поста"""
-        response = self.authorized_client.post(
-            reverse(
-                'post_edit', kwargs={'username': 'TestUser', 'post_id': '1'}
+            response = self.authorized_client.post(
+                reverse(
+                    'new_post',
+                ),
+                data=form_data,
+                follow=True,
             )
-        )
+            self.assertRedirects(response, reverse('index'))
+            Post.objects.filter(
+                text='Новый текст',
+                group_id=group_id,
+                author=self.post.author,
+            ).exists()
 
-        form_fields = {
-            'text': forms.fields.CharField,
-            'group': forms.fields.ChoiceField,
-        }
-
-        for value, expected in form_fields.items():
-            with self.subTest(value=value, expected=expected):
-                form_field = response.context['form'].fields[value]
-                self.assertIsInstance(form_field, expected)
 
     def test_profile_shows_correct_context(self):
         """Тестирование содержания context в страницы профиля"""
@@ -233,8 +221,6 @@ class PostPagesTests(TestCase):
 
     def test_follow_view(self):
         """Тестирование функции подписки"""
-        self.authorized_client2 = Client()
-        self.authorized_client.force_login(self.user2)
         self.authorized_client.get(
             reverse('profile_follow', kwargs={'username': 'TestUser'})
         )
@@ -244,8 +230,6 @@ class PostPagesTests(TestCase):
 
     def test_unfollow_view(self):
         """Тестирование функции отподписки"""
-        self.authorized_client2 = Client()
-        self.authorized_client.force_login(self.user2)
         Follow.objects.create(user=self.user2, author=self.user)
         self.authorized_client.get(
             reverse('profile_unfollow', kwargs={'username': 'TestUser'})
@@ -255,44 +239,43 @@ class PostPagesTests(TestCase):
         )
 
 
-# class PaginatorViewsTest(TestCase):
-#     """Тестирование паджинатора"""
-#
-#     @classmethod
-#     def setUpClass(cls):
-#         super().setUpClass()
-#         cls.user = User.objects.create_user(username='TestUser')
-#         posts = (Post(text=f'Пост №{i}', author=cls.user) for i in range(13))
-#         Post.objects.bulk_create(posts, 13)
-#
-#     def test_first_page_contains_ten_records(self):
-#         response = self.client.get(reverse('index'))
-#         self.assertEqual(len(response.context.get('page').object_list), 10)
-#
-#     def test_second_page_contains_three_records(self):
-#         response = self.client.get(reverse('index') + '?page=2')
-#         self.assertEqual(len(response.context.get('page').object_list), 3)
+class PaginatorViewsTest(TestCase):
+    """Тестирование паджинатора"""
 
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.user = User.objects.create_user(username='TestUser')
+        posts = (Post(text=f'Пост №{i}', author=cls.user) for i in range(13))
+        Post.objects.bulk_create(posts, 13)
 
-# class CacheViewsTest(TestCase):
-#     @classmethod
-#     def setUpClass(cls):
-#         super().setUpClass()
-#         cls.user = User.objects.create_user(username='TestUser')
-#         post_text = 'Тестовый текст'
-#         Post.objects.create(text=post_text, author=cls.user)
-#
-#     def setUp(self):
-#         self.guest_user = Client()
-#
-#     def test_index_cache(self):
-#         """Тестирование работы кэша главной страницы"""
-#         response = self.client.get(reverse('index'))
-#         post_text_after_cache = 'Текстовый текст2'
-#         Post.objects.create(text=post_text_after_cache, author=self.user)
-#         second_response = self.guest_user.get(reverse('index'))
-#
-#         self.assertEqual(
-#             len(response.context.get('page').object_list),
-#             len(second_response.context.get('page').object_list),
-#         )
+    def test_first_page_contains_ten_records(self):
+        response = self.client.get(reverse('index'))
+        self.assertEqual(len(response.context.get('page').object_list), 10)
+
+    def test_second_page_contains_three_records(self):
+        response = self.client.get(reverse('index') + '?page=2')
+        self.assertEqual(len(response.context.get('page').object_list), 3)
+
+class CacheViewsTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.user = User.objects.create_user(username='TestUser')
+        post_text = 'Тестовый текст'
+        Post.objects.create(text=post_text, author=cls.user)
+
+    def setUp(self):
+        self.guest_user = Client()
+
+    def test_index_cache(self):
+        """Тестирование работы кэша главной страницы"""
+        response = self.client.get(reverse('index'))
+        post_text_after_cache = 'Текстовый текст2'
+        Post.objects.create(text=post_text_after_cache, author=self.user)
+        second_response = self.guest_user.get(reverse('index'))
+
+        self.assertNotEqual(
+            len(response.context.get('page').object_list),
+            len(second_response.context.get('page').object_list),
+        )

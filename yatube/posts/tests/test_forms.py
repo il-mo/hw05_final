@@ -4,7 +4,8 @@ import tempfile
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
+from django.core.cache import cache
 from django.urls import reverse
 
 from ..models import Group, Post
@@ -20,9 +21,9 @@ class PostCreateFormTests(TestCase):
     GROUP_DESCRIPTION = 'Описание группы'
 
     @classmethod
+    @override_settings(MEDIA_ROOT=tempfile.mkdtemp(dir=settings.BASE_DIR))
     def setUpClass(cls):
         super().setUpClass()
-        settings.MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
         cls.user = User.objects.create(username=cls.AUTH_USER_NAME)
         cls.group = Group.objects.create(
             title=cls.PAGE_GROUP,
@@ -43,6 +44,8 @@ class PostCreateFormTests(TestCase):
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
 
+        cache.clear()
+
     def test_create_page(self):
         """Тестирование формы создания нового поста c картинкой"""
         small_gif = (
@@ -58,16 +61,9 @@ class PostCreateFormTests(TestCase):
             name='small.gif', content=small_gif, content_type='image/gif'
         )
 
-        form_data = {
-            'text': 'Тестовый текст',
-            'image': uploaded,
-        }
+        posts_count = Post.objects.count()
 
-        for group_id in (self.group.id, None):
-            with self.subTest(group_id=group_id):
-                posts_count = Post.objects.count()
-                if group_id:
-                    form_data['group_id'] = group_id
+        form_data = {'text': 'Тестовый текст', 'image': uploaded, }
 
         response = self.authorized_client.post(
             reverse('new_post'), data=form_data, follow=True
@@ -77,7 +73,6 @@ class PostCreateFormTests(TestCase):
         self.assertTrue(
             Post.objects.filter(
                 text='Тестовый текст',
-                group_id=group_id,
                 image='posts/small.gif',
             ).exists()
         )

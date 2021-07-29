@@ -81,9 +81,11 @@ class PostUrlsTests(TestCase):
     def test_urls_uses_correct_template(self):
         """Тестирование вызываемых шаблонов"""
         templates_url_names = {
-            'posts/new_post.html': '/TestUser/1/edit/',
+            'posts/new_post.html': '/TestUser/1/edit/',     # noqa
+            'posts/new_post.html': '/new/',                 # noqa
             'posts/group.html': '/group/test-group/',
             'posts/follow.html': '/follow/',
+            'index.html': '/',
         }
 
         for template, adress in templates_url_names.items():
@@ -91,12 +93,3 @@ class PostUrlsTests(TestCase):
                 response = self.authorized_client.get(adress)
                 self.assertTemplateUsed(response, template)
 
-    def test_edit_page_uses_correct_template(self):
-        """Тестирование вызываемого шаблона создание поста"""
-        response = self.authorized_client.get('/new/')
-        self.assertTemplateUsed(response, 'posts/new_post.html')
-
-    # def test_edit_page_uses_correct_template(self):
-    #     """Тестирование вызываемого шаблона главной страницы"""
-    #     response = self.guest_client.get('/')
-    #     self.assertTemplateUsed(response, 'index.html')

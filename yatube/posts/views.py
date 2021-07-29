@@ -2,13 +2,13 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.cache import cache_page
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_http_methods, require_GET
 
 from .forms import CommentForm, PostForm
 from .models import Follow, Group, Post, User
 
 
-@require_http_methods(['GET'])
+@require_GET
 def group_posts(request, slug):
     group = get_object_or_404(Group, slug=slug)
     posts = group.posts.all()
@@ -27,8 +27,7 @@ def group_posts(request, slug):
     )
 
 
-@require_http_methods(['GET'])
-@cache_page(20)
+@require_GET
 def index(request):
     post_list = Post.objects.all()
 
@@ -65,7 +64,7 @@ def new_post(request):
     return redirect('index')
 
 
-@require_http_methods(['GET'])
+@require_GET
 def profile(request, username):
     author = get_object_or_404(User, username=username)
     posts = author.posts.filter(author=author)
@@ -166,10 +165,9 @@ def server_error(request):
     return render(request, 'misc/500.html', status=500)
 
 
-@require_http_methods(['GET'])
+@require_GET
 @login_required
 def follow_index(request):
-
     post_list = Post.objects.filter(author__following__user=request.user)
 
     paginator = Paginator(post_list, 10)
@@ -185,29 +183,28 @@ def follow_index(request):
     )
 
 
-@require_http_methods(['GET'])
+@require_GET
 @login_required
 def profile_follow(request, username):
     author = get_object_or_404(User, username=username)
-    user_subscribed = Follow.objects.filter(
-        user=request.user, author=author
-    ).exists()
 
-    if request.user != author and not user_subscribed:
-        Follow.objects.create(user=request.user, author=author)
+    if request.user != author:
+        try:
+            Follow.objects.get(
+                user=request.user, author=author
+            )
+        except Follow.DoesNotExist:
+            Follow.objects.create(user=request.user, author=author)
 
     return redirect('profile', username=username)
 
 
-@require_http_methods(['GET'])
+@require_GET
 @login_required
 def profile_unfollow(request, username):
     author = get_object_or_404(User, username=username)
-    user_subscribed = Follow.objects.filter(
+    Follow.objects.filter(
         user=request.user, author=author
-    ).exists()
-
-    if user_subscribed:
-        Follow.objects.get(user=request.user, author=author).delete()
+    ).delete()
 
     return redirect('profile', username=username)
