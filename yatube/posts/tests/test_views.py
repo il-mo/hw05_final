@@ -4,9 +4,9 @@ import tempfile
 from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase, override_settings
-from django.core.cache import cache
 from django.urls import reverse
 
 from ..models import Follow, Group, Post
@@ -21,7 +21,7 @@ class PostPagesTests(TestCase):
     PAGE_GROUP = 'Тестовая группа'
     GROUP_SLUG = 'test-group'
     GROUP_DESCRIPTION = 'Описание группы'
-
+    IMAGE = 'posts/small.gif'
 
     @classmethod
     @override_settings(MEDIA_ROOT=tempfile.mkdtemp(dir=settings.BASE_DIR))
@@ -35,7 +35,6 @@ class PostPagesTests(TestCase):
             b'\x02\x00\x01\x00\x00\x02\x02\x0C'
             b'\x0A\x00\x3B'
         )
-        cls.IMAGE = 'posts/small.gif'
         cls.upload = SimpleUploadedFile(
             name='small.gif', content=small_gif, content_type='image/gif'
         )
@@ -73,9 +72,7 @@ class PostPagesTests(TestCase):
         templates_pages_names = {
             'index.html': reverse('index'),
             'posts/new_post.html': reverse('new_post'),
-            'posts/group.html': (
-                reverse('group_posts', kwargs={'slug': 'test-group'})
-            ),
+            'posts/group.html': (reverse('group_posts', kwargs={'slug': 'test-group'})),
         }
 
         for template, reverse_name in templates_pages_names.items():
@@ -91,7 +88,6 @@ class PostPagesTests(TestCase):
             self.AUTH_USER_NAME: response.context['page'][0].author.username,
             self.PAGE_GROUP: response.context['page'][0].group.title,
             self.IMAGE: response.context['page'][0].image,
-
         }
         for expected, value in context_post.items():
             with self.subTest(value=value):
@@ -112,9 +108,7 @@ class PostPagesTests(TestCase):
             self.AUTH_USER_NAME: response.context['page'][0].author.username,
             self.PAGE_GROUP: response.context['page'][0].group.title,
             self.GROUP_SLUG: response.context['page'][0].group.slug,
-            self.GROUP_DESCRIPTION: response.context['page'][
-                0
-            ].group.description,
+            self.GROUP_DESCRIPTION: response.context['page'][0].group.description,
             self.IMAGE: response.context['page'][0].image,
         }
 
@@ -151,7 +145,6 @@ class PostPagesTests(TestCase):
                 group_id=group_id,
                 author=self.post.author,
             ).exists()
-
 
     def test_profile_shows_correct_context(self):
         """Тестирование содержания context в страницы профиля"""
@@ -256,6 +249,7 @@ class PaginatorViewsTest(TestCase):
     def test_second_page_contains_three_records(self):
         response = self.client.get(reverse('index') + '?page=2')
         self.assertEqual(len(response.context.get('page').object_list), 3)
+
 
 class CacheViewsTest(TestCase):
     @classmethod

@@ -3,9 +3,9 @@ import tempfile
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase, override_settings
-from django.core.cache import cache
 from django.urls import reverse
 
 from ..models import Group, Post
@@ -63,7 +63,10 @@ class PostCreateFormTests(TestCase):
 
         posts_count = Post.objects.count()
 
-        form_data = {'text': 'Тестовый текст', 'image': uploaded, }
+        form_data = {
+            'text': 'Тестовый текст',
+            'image': uploaded,
+        }
 
         response = self.authorized_client.post(
             reverse('new_post'), data=form_data, follow=True
@@ -76,7 +79,27 @@ class PostCreateFormTests(TestCase):
                 image='posts/small.gif',
             ).exists()
         )
+        self.assertEqual(Post.objects.count(), posts_count + 1)
+        
+        """Тестирование формы создания нового поста c группой"""
+        posts_count = Post.objects.count()
+        
+        form_data_with_group = {
+            'text': 'Тестовый текст',
+            'group': PostCreateFormTests.group.id,
+        }
+        response = self.authorized_client.post(
+            reverse('new_post'), data=form_data_with_group, follow=True
+        )
 
+        self.assertRedirects(response, reverse('index'))
+
+        self.assertTrue(
+            Post.objects.filter(
+                text='Тестовый текст',
+                group=self.group,
+            ).exists()
+        )
         self.assertEqual(Post.objects.count(), posts_count + 1)
 
     def test_post_edit(self):

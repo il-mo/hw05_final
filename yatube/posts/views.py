@@ -1,7 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.cache import cache_page
 from django.views.decorators.http import require_http_methods, require_GET
 
 from .forms import CommentForm, PostForm
@@ -75,9 +74,7 @@ def profile(request, username):
     count_post = posts.count()
 
     if request.user.is_authenticated:
-        following = Follow.objects.filter(
-            user=request.user, author=author
-        ).exists()
+        following = request.user.follower.filter(author=author).exists()
     else:
         following = False
 
@@ -93,6 +90,7 @@ def profile(request, username):
     )
 
 
+@require_GET
 def post_view(request, username, post_id):
     post = get_object_or_404(Post, pk=post_id)
     comments = post.comments.all()
@@ -155,14 +153,6 @@ def add_comment(request, username, post_id):
     comment.save()
 
     return redirect('post', username, post_id)
-
-
-def page_not_found(request, exception):
-    return render(request, 'misc/404.html', {'path': request.path}, status=404)
-
-
-def server_error(request):
-    return render(request, 'misc/500.html', status=500)
 
 
 @require_GET
