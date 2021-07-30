@@ -33,7 +33,9 @@ class PostUrlsTests(TestCase):
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
 
-        self.user_not_author = User.objects.create_user(username='TestUserNotAuthor')
+        self.user_not_author = User.objects.create_user(
+            username='TestUserNotAuthor'
+        )
         self.authorized_client_not_author = Client()
         self.authorized_client_not_author.force_login(self.user_not_author)
 
@@ -41,12 +43,18 @@ class PostUrlsTests(TestCase):
         """Тестирование доступности страниц"""
         pages_status = {
             HTTPStatus.OK: self.guest_client.get('/').status_code,
-            HTTPStatus.OK: self.guest_client.get('/group/test-group/').status_code,
+            HTTPStatus.OK: self.guest_client.get(
+                '/group/test-group/'
+            ).status_code,
             HTTPStatus.OK: self.authorized_client.get('/new/').status_code,
             HTTPStatus.OK: self.guest_client.get('/TestUser/').status_code,
             HTTPStatus.OK: self.guest_client.get('/TestUser/1/').status_code,
-            HTTPStatus.FOUND: self.guest_client.get('/TestUser/1/edit/').status_code,
-            HTTPStatus.OK: self.authorized_client.get('/TestUser/1/edit/').status_code,
+            HTTPStatus.FOUND: self.guest_client.get(
+                '/TestUser/1/edit/'
+            ).status_code,
+            HTTPStatus.OK: self.authorized_client.get(
+                '/TestUser/1/edit/'
+            ).status_code,
             HTTPStatus.FOUND: self.authorized_client_not_author.get(
                 '/TestUser/1/edit/'
             ).status_code,
@@ -54,7 +62,9 @@ class PostUrlsTests(TestCase):
         }
         for expected, value in pages_status.items():
             with self.subTest(value=value, expected=expected):
-                self.assertEqual(value, expected, 'Статус страницы не правильный')
+                self.assertEqual(
+                    value, expected, 'Статус страницы не правильный'
+                )
 
     def test_new_post_url_redirect_anonymous_on_login(self):
         """Тестирование редиректа со страницы создания поста
