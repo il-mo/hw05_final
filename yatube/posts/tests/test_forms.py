@@ -80,10 +80,10 @@ class PostCreateFormTests(TestCase):
             ).exists()
         )
         self.assertEqual(Post.objects.count(), posts_count + 1)
-        
-        '''Тестирование формы создания нового поста c группой'''
+
+        """Тестирование формы создания нового поста c группой"""
         posts_count = Post.objects.count()
-        
+
         form_data_with_group = {
             'text': 'Тестовый текст',
             'group': PostCreateFormTests.group.id,

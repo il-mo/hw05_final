@@ -1,7 +1,6 @@
 import shutil
 import tempfile
 
-from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
@@ -72,7 +71,9 @@ class PostPagesTests(TestCase):
         templates_pages_names = {
             'index.html': reverse('index'),
             'posts/new_post.html': reverse('new_post'),
-            'posts/group.html': (reverse('group_posts', kwargs={'slug': 'test-group'})),
+            'posts/group.html': (
+                reverse('group_posts', kwargs={'slug': 'test-group'})
+            ),
         }
 
         for template, reverse_name in templates_pages_names.items():
@@ -108,7 +109,9 @@ class PostPagesTests(TestCase):
             self.AUTH_USER_NAME: response.context['page'][0].author.username,
             self.PAGE_GROUP: response.context['page'][0].group.title,
             self.GROUP_SLUG: response.context['page'][0].group.slug,
-            self.GROUP_DESCRIPTION: response.context['page'][0].group.description,
+            self.GROUP_DESCRIPTION: response.context['page'][
+                0
+            ].group.description,
             self.IMAGE: response.context['page'][0].image,
         }
 
