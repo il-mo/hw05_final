@@ -81,6 +81,7 @@ class PostCreateFormTests(TestCase):
         )
         self.assertEqual(Post.objects.count(), posts_count + 1)
 
+    def test_create_page_with_group(self):
         """Тестирование формы создания нового поста c группой"""
         posts_count = Post.objects.count()
 
