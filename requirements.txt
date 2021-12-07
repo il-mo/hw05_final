@@ -24,3 +24,4 @@ zipp==2.2.0               # via importlib-metadata
 mixer==7.1.2
 
 pytils~=0.3
+django-debug-toolbar~=3.2.1
